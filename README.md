@@ -1,20 +1,31 @@
 # ICD-10–ATC Unified Embedding Space
 
-This repository releases the **ICD-10–ATC Unified Embedding Space**:  
-a set of joint, unsupervised embeddings for medical codes learned from large-scale healthcare claims data.
+This repository releases the **ICD-10–ATC Unified Embedding Space**, a set of joint, unsupervised vector representations (“embeddings”) for medical codes learned from large-scale healthcare claims data.  
+Its primary purpose is to **share these embeddings for reuse** by researchers and data scientists working with EHR or claims data.
 
-The **primary goal** of this repository is to **share these embeddings for reuse**
-by researchers and data scientists working with EHR or claims data.
+**Embeddings** represent each medical code as a dense numerical vector such that codes that tend to occur in similar clinical contexts (e.g. diagnoses and their associated treatments) are close to each other in the embedding space. This enables semantic comparisons between medical concepts beyond sparse, binary representations.
+
+This resource is released in the context of the accompanying paper:
+
+> *Medical Code Embeddings from Claims-Based Co-occurrences: A Unified Semantic Space for ICD-10 Diagnoses and ATC*  
+> *NPJ Digital Medicine* (submitted) [link to be added]
 
 ---
 
-## Purpose and scope
+## Quick access
 
-The main interest of this resource is to provide a **shared latent space**
+- **Released embeddings:**  `main_results/data/embeddings_ESND_2FC.csv.gz`
+- **Code vocabulary (row index–code mapping):**  `main_results/data/vocab.csv`
+
+---
+
+## Scope and code coverage
+
+The embedding space provides a **shared latent representation**
 for **ICD-10 diagnosis codes** and **ATC medication codes**, enabling international researchers
-to exploit semantic relationships between diagnoses and treatments beyond sparse, binary representations.
+to explore semantic relationships between diagnoses and treatments within a unified vector space.
 
-In addition, the embedding space also comprises **most medical coding systems used in the French SNDS**
+In addition, the embeddings also comprise **most medical coding systems used in the French SNDS**
 (*Système National des Données de Santé*), including:
 - **ICD-10** (diagnoses),
 - **ATC** (medications),
@@ -22,9 +33,7 @@ In addition, the embedding space also comprises **most medical coding systems us
 - **LPP** (medical devices),
 - **NABM** (laboratory tests),
 
-making it directly usable for French researchers working with SNDS-derived data.
-
-No individual-level healthcare data are included.
+making the resource directly usable for French researchers working with SNDS-derived data.
 
 ---
 
@@ -36,17 +45,16 @@ Typical uses include:
 - **Automatic retrieval of related codes**  
   (e.g. semantic neighbourhoods, diagnosis–treatment associations, exploratory search).
 
-- **Reuse or fine-tuning as an input embedding layer**  
-  for machine-learning or neural models applied to claims or EHR data.
+- **Reuse as a pretrained embedding lookup table**
+  optionally fine-tuned, for neural models applied to claims or EHR data using ICD-10, ATC, and related code systems.
 
-The scope is intentionally limited to these core use cases.
 
 ---
 
 ## Data source, method, and embedding properties
 
-The embeddings are learned from longitudinal claims data extracted from the **SNDS**,
-which covers nearly the entire French population and aggregates reimbursement and hospital information.
+The embeddings are learned from longitudinal claims data extracted from the **ESND** (subset of the SNDS),
+which covers ~1.5 milion French care sequences and aggregates reimbursement and hospital information.
 
 At a high level:
 - Code sequences are extracted from care trajectories.
@@ -63,15 +71,6 @@ The resulting representations are:
 
 ---
 
-## More information
-
-Full methodological details, evaluation, and experimental results are described in the accompanying paper:
-
-> *[Paper title]*  
-> *NPJ Digital Medicine* (submitted)
-
----
-
 ## Repository structure
 
 The repository is organised into two main subfolders.
@@ -81,22 +80,13 @@ The repository is organised into two main subfolders.
 This is the **main entry point** for users interested in reusing the embeddings.
 
 It contains:
-- the released embeddings (CSV format),
+- the released embeddings,
 - a `vocab.csv` file mapping **embedding row indices to medical code identifiers**
   (required to interpret or reuse the embeddings),
 - auxiliary label and chapter tables for interpretation,
 - lightweight scripts for:
   - nearest-neighbour queries,
-  - latent-space visualisation (UMAP),
-  - local similarity inspection.
-
-Direct links to the released data:
-
-- Embedding vectors:  
-  `main_results/data/embeddings_ESND_2FC.csv.gz`
-
-- Row index–code mapping:  
-  `main_results/data/vocab.csv`
+  - latent-space (UMAP) and local graph visualisation
 
 See [`main_results/README.md`](main_results/README.md) for details.
 
@@ -109,8 +99,6 @@ using synthetic EHR-like data.
 
 It illustrates each methodological step (co-occurrences, PPMI, SVD, visualisation)
 for transparency and pedagogical purposes.
-
-It is **not required** to reuse the released embeddings.
 
 See [`toy_data/README.md`](toy_data/README.md).
 
@@ -127,23 +115,24 @@ and relative paths used in the scripts.
 
 ---
 
-## Contact
-
-For questions or reuse inquiries, please contact:  
-[contact email]
-
----
-
 ## Citation
 
 If you use the ICD-10–ATC Unified Embedding Space, or derived representations,
 please cite the accompanying paper:
 
-> *[Paper title]*  
-> *Authors*  
-> *NPJ Digital Medicine* (submitted)
+> *Medical Code Embeddings from Claims-Based Co-occurrences: A Unified Semantic Space for ICD-10 Diagnoses and ATC *  
+> *C.Faujour, S.Bouee, C.Emery, A-S.Jannot*  
+> *NPJ Digital Medicine* (submitted) [link to come]
 
 This helps support continued sharing of research resources.
+
+---
+
+## Contact
+
+For questions or reuse inquiries, please contact:  
+[corentin.faujour@cemka.fr]
+[c.faujour@outlook.fr]
 
 ---
 
@@ -158,3 +147,4 @@ interactively explore code neighbourhoods without writing code
 would be a natural extension.
 
 Contributions or suggestions in this direction are welcome.
+
