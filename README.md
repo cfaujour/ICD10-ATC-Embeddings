@@ -14,8 +14,8 @@ This resource is released in the context of the accompanying paper:
 
 ## Quick access
 
-- **Released embeddings:**  `main_results/data/embeddings_ESND_2FC.csv.gz`
-- **Code vocabulary (row index–code mapping):**  `main_results/data/vocab.csv`
+- **Released embeddings:**  [`main_results/data/embeddings_ESND_2FC.csv.gz`](main_results/data/embeddings_ESND_2FC.csv.gz)
+- **Code vocabulary (row index–code mapping):**  [`main_results/data/vocab.csv`](main_results/data/vocab.csv)
 
 ---
 
