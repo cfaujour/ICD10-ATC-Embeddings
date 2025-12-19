@@ -77,7 +77,7 @@ in the toy setting.
 Below is a 2D UMAP projection of the toy code embeddings,
 colored by the latent concept used during data generation.
 
-![Toy UMAP visualization](data/umap_2d_toy.png)
+<img src="data/UMAP_umap_2d_toy.png" width="420" />
 
 ---
 
