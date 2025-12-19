@@ -115,16 +115,23 @@ and relative paths used in the scripts.
 
 ---
 
-## Citation
+## Citation & acknowledgements
 
-If you use the ICD-10–ATC Unified Embedding Space, or derived representations,
-please cite the accompanying paper:
+If you use the ICD-10–ATC Unified Embedding Space, or any derived representations, please cite the accompanying paper:
 
-> *Medical Code Embeddings from Claims-Based Co-occurrences: A Unified Semantic Space for ICD-10 Diagnoses and ATC *  
-> *C.Faujour, S.Bouee, C.Emery, A-S.Jannot*  
-> *NPJ Digital Medicine* (submitted) [link to come]
+> *Medical Code Embeddings from Claims-Based Co-occurrences: A Unified Semantic Space for ICD-10 Diagnoses and ATC*  
+> C. Faujour, S. Bouée, C. Emery, A.-S. Jannot  
+> *NPJ Digital Medicine* (submitted) [link to be added]
 
-This helps support continued sharing of research resources.
+Citing the paper helps support continued sharing of research resources.
+
+---
+
+### Acknowledgements
+
+This work was carried out in the context of the author’s PhD research,
+within the **HeKA team** (Université Paris Cité, Inria Paris),
+and in collaboration with **CEMKA**.
 
 ---
 
