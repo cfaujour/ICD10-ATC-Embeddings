@@ -1,21 +1,25 @@
 # toy_data/01_dataset_toy_gen.R
-# Toy dataset generator for co-occurrence / embedding demos.
-# Output: toy_data/data/sequences.csv.gz and toy_data/data/code_topics.csv
+# Generate a small synthetic event dataset for testing co-occurrence
+# and embedding workflows.
+# Writes:
+#   - toy_data/data/sequences.csv.gz
+#   - toy_data/data/code_topics.csv
 
 suppressPackageStartupMessages({
   library(data.table)
 })
 
+# Create a directory if it does not already exist
 ensure_dir <- function(path) {
   if (!dir.exists(path)) dir.create(path, recursive = TRUE, showWarnings = FALSE)
 }
 
-# ---- Output folder (relative to repo root) ----
+# Output folder, relative to the repository root
 out_dir <- file.path("toy_data", "data")
 ensure_dir(out_dir)
 
-# ------------------------- Concept vocabularies -------------------------
-
+# Code groups used to simulate related clinical patterns.
+# Each topic contains diagnosis-like codes (ICD) and medication-like codes (ATC).
 concepts <- list(
   diabetes = list(
     icd = c("ICD-E11","ICD-E119","ICD-E1165","ICD-E114","ICD-E118","ICD-E10","ICD-E109"),
@@ -43,11 +47,14 @@ concepts <- list(
   )
 )
 
+# General-purpose codes that can appear across many patients and visits.
+# These act as background noise so the data is not too clean or perfectly separated.
 background_icd <- c("ICD-Z000","ICD-R05","ICD-M545","ICD-K219","ICD-Z139","ICD-R519")
 background_atc <- c("ATC-A02BC02","ATC-N02BE01","ATC-R05DA04","ATC-A03FA01")
 
-# ------------------------- Generator -------------------------
-
+# Sample a patient-level profile.
+# Each patient is assigned 2 or 3 main topics, with weights used later to make
+# some topics more likely than others during visit generation.
 draw_patient_profile <- function() {
   K <- sample(2:3, 1, prob = c(0.65, 0.35))
   picks <- sample(names(concepts), K, replace = FALSE)
@@ -57,6 +64,15 @@ draw_patient_profile <- function() {
   list(weights = w, bg = bg)
 }
 
+# Generate the codes observed around a single visit time.
+#
+# For a named concept, the function samples a few ICD and ATC codes from that
+# concept. It may also add an occasional background code.
+#
+# For "background", codes are drawn only from the shared background pools.
+#
+# jitter_prob controls whether a small subset of the sampled codes is repeated
+# one day before or after the visit, to make the timelines look less rigid.
 emit_visit_codes <- function(concept_name, t0,
                              base_icd_n = 2:3, base_atc_n = 1:3,
                              jitter_prob = 0.25) {
@@ -68,15 +84,18 @@ emit_visit_codes <- function(concept_name, t0,
     atc_pool <- concepts[[concept_name]]$atc
     icd <- sample(icd_pool, sample(base_icd_n, 1), replace = TRUE)
     atc <- sample(atc_pool, sample(base_atc_n, 1), replace = TRUE)
+
+    # Occasionally mix in a background code so visits are not perfectly topic-pure
     if (runif(1) < 0.20) icd <- c(icd, sample(background_icd, 1))
     if (runif(1) < 0.20) atc <- c(atc, sample(background_atc, 1))
   }
-  
+
   codes_vec <- c(icd, atc)
   onto_vec  <- substr(codes_vec, 1, 3)
-  
+
   codes <- data.table(Event_code = codes_vec, onto = onto_vec, t = t0)
-  
+
+  # Small timestamp jitter: duplicate a few sampled codes at t0 - 1 or t0 + 1
   if (runif(1) < jitter_prob && length(codes_vec) > 0) {
     jitter_t <- t0 + sample(c(-1L, 1L), 1)
     pick_n <- sample(1:min(2L, length(codes_vec)), 1)
@@ -84,13 +103,22 @@ emit_visit_codes <- function(concept_name, t0,
     jcodes <- data.table(Event_code = codes_vec[pick_idx], onto = onto_vec[pick_idx], t = jitter_t)
     codes <- rbind(codes, jcodes, use.names = TRUE)
   }
-  
+
   codes[]
 }
 
+# Main dataset generator.
+#
+# Output:
+#   - events: one row per event code with patient id, timestamp, and ontology
+#   - code_topics: lookup table linking each code to its simulated topic
+#
+# Visit times are spaced with random gaps so patients have uneven histories.
 generate_toy_sequences <- function(n_patients = 1500, mean_visits = 12, seed = 42) {
   set.seed(seed)
-  
+
+  # Mapping used later for inspection or evaluation:
+  # each code is tagged with the topic it came from
   code_topics <- unique(rbindlist(list(
     data.table(Event_code = unlist(lapply(concepts, `[[`, "icd")),
                onto = "ICD",
@@ -101,32 +129,35 @@ generate_toy_sequences <- function(n_patients = 1500, mean_visits = 12, seed = 4
     data.table(Event_code = background_icd, onto = "ICD", topic = "background"),
     data.table(Event_code = background_atc, onto = "ATC", topic = "background")
   ), use.names = TRUE))
-  
+
   out_list <- vector("list", n_patients)
-  
+
   for (pid in seq_len(n_patients)) {
     prof <- draw_patient_profile()
     visits <- max(1L, rpois(1, lambda = mean_visits))
-    
+
+    # Start the timeline at a random adult age, then add random gaps between visits
     start_age_days <- sample(18:75, 1) * 365L
     gaps <- pmax(1L, as.integer(rexp(visits, rate = 1/90)))
     t_seq <- start_age_days + cumsum(gaps)
-    
+
     rows <- vector("list", visits)
-    
+
     for (v in seq_len(visits)) {
       t0 <- t_seq[v]
-      
+
+      # Choose 1 or 2 active topics for this visit, favoring the patient's profile
       w <- pmax(prof$weights, 1e-9)
       focus_n <- sample(1:2, 1, prob = c(0.65, 0.35))
       focus <- sample(names(concepts), focus_n, prob = w)
-      
+
       bundle <- rbindlist(lapply(focus, function(cname) emit_visit_codes(cname, t0)), use.names = TRUE)
-      
+
+      # Some visits also include generic background activity
       if (runif(1) < prof$bg) {
         bundle <- rbind(bundle, emit_visit_codes("background", t0), use.names = TRUE)
       }
-      
+
       rows[[v]] <- data.table(
         ID = sprintf("P%05d", pid),
         Event_code = bundle$Event_code,
@@ -134,18 +165,17 @@ generate_toy_sequences <- function(n_patients = 1500, mean_visits = 12, seed = 4
         onto = bundle$onto
       )
     }
-    
+
     out_list[[pid]] <- rbindlist(rows, use.names = TRUE)
   }
-  
+
   events <- rbindlist(out_list, use.names = TRUE)
   setkeyv(events, c("ID", "t", "Event_code"))
-  
+
   list(events = events[], code_topics = code_topics[])
 }
 
-# ------------------------- Run -------------------------
-
+# Run the generator and write both output files
 toy <- generate_toy_sequences(n_patients = 1500, mean_visits = 12, seed = 42)
 
 fwrite(toy$events, file.path(out_dir, "sequences.csv.gz"))
